@@ -1,10 +1,10 @@
 pipeline {
-    agent any
+    agent { dockerfile true }
     stages {
         stage('Test') {
             steps {
-                sh 'uptime'
-                sh 'uname -r'
+                sh 'node --version'
+                sh 'svn --version'
             }
         }
     }
