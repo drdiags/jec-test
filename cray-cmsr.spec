@@ -8,10 +8,10 @@
 Name: %{namespace}-%{intranamespace_name}
 License:      GPLv2
 Group:        System/Kernel
-Version: %{_tag}
-Release: %release
+Version: 1.0
+Release: 1.0
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release} 
-Source: %{source_name}.tar.bz2
+Source: cmsr.tar.bz2
 Summary: The kernel module cmsr
 URL: %url
 Vendor: Cray
@@ -20,23 +20,12 @@ Packager: Cray Inc.
 BuildRequires: module-init-tools
 BuildRequires: kernel-source
 BuildRequires: kernel-syms
-%if %sles_version == 10
-BuildRequires: cray-rpm
-%endif
-
-%if %{with ari}
-%cray_kernel_module_package -x cray_ari_c
-%endif
-
-%if %{with gni}
-%cray_kernel_module_package -x cray_gem_c
-%endif
 
 %description
 A kernel module to expose specific MSRs to unprivileged userspace processes on compute nodes.
 
 %prep
-%incremental_setup -n %{source_name}
+%incremental_setup -n cmsr
 
 set -- *
 %{__mkdir} source
@@ -44,28 +33,22 @@ set -- *
 %{__mkdir} obj
 
 %build
-for flavor in %{flavors_to_build}
-do
-    %{__rm} -rf obj/${flavor}
-    %{__cp} -r source obj/${flavor}
-    %{__make} -C /usr/src/linux-obj/%{_target_cpu}/${flavor} modules \
+%{__rm} -rf obj/${flavor}
+%{__cp} -r source obj/${flavor}
+%{__make} -C /usr/src/linux-obj/x86_64/${flavor} modules \
 	M=${PWD}/obj/${flavor} \
 	%_smp_mflags
-done
 
 %install
 export INSTALL_MOD_PATH=$RPM_BUILD_ROOT
 export INSTALL_MOD_DIR=updates
 
-for flavor in %{flavors_to_build}
-do
-    %{__make} -C /usr/src/linux-obj/%{_target_cpu}/${flavor} modules_install \
+%{__make} -C /usr/src/linux-obj/x86_64/${flavor} modules_install \
         M=${PWD}/obj/${flavor}
-done
 
 # Install modprobe config, with default MSR list
 mkdir -p ${RPM_BUILD_ROOT}/etc/modprobe.d
-install source/boottime/modprobe.d/cmsr-${flavor}.conf \
+install source/boottime/modprobe.d/cmsr-cray_ari_c.conf \
     ${RPM_BUILD_ROOT}/etc/modprobe.d/cmsr.conf
 
 # Install required rc scripts
